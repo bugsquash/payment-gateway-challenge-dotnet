@@ -34,15 +34,11 @@ public class PaymentsController : Controller
     [HttpPost]
     public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PaymentRequest paymentRequest)
     {
-        var cardNumberString = paymentRequest.CardNumber.ToString();
-
-        var cardNumberLastFourDigits = Convert.ToInt16(cardNumberString.Substring(cardNumberString.Length - 4));
-
         var postPaymentResponse = new PostPaymentResponse()
         {
             Id = Guid.NewGuid(),
             Amount = paymentRequest.Amount,
-            CardNumberLastFour = cardNumberLastFourDigits,
+            CardNumberLastFour = ExtractLastFourDigitsFromCardNumber(paymentRequest.CardNumber),
             Currency = paymentRequest.Currency,
             ExpiryMonth = paymentRequest.ExpiryMonth,
             ExpiryYear = paymentRequest.ExpiryYear,
@@ -52,5 +48,14 @@ public class PaymentsController : Controller
         _paymentsRepository.Add(postPaymentResponse);
 
         return postPaymentResponse;
+    }
+
+    private static int ExtractLastFourDigitsFromCardNumber(long cardNumber)
+    {
+        var cardNumberString = cardNumber.ToString();
+
+        var cardNumberLastFourDigits = Convert.ToInt16(cardNumberString.Substring(cardNumberString.Length - 4));
+
+        return cardNumberLastFourDigits;
     }
 }
