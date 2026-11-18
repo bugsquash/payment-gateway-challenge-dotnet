@@ -61,7 +61,7 @@ public class PaymentsControllerTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact(Skip = "Failing red test")]
+    [Fact]
     public async Task PostPaymentAsync_GivenValidPaymentRequest_Returns200()
     {
         // Arrange
@@ -76,11 +76,11 @@ public class PaymentsControllerTests
 
         PaymentRequest paymentRequest = new()
         {
-            Amount = 0,
+            Amount = 10,
             CardNumber = 4012888888881881,
             Currency = "GBP",
             Cvv = 123,
-            ExpiryMonth = 01,
+            ExpiryMonth = 12,
             ExpiryYear = DateTime.Now.Year
         };
 

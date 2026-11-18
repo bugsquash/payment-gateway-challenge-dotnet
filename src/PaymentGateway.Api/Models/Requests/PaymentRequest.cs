@@ -5,7 +5,6 @@ namespace PaymentGateway.Api.Models.Requests
     public class PaymentRequest
     {
         [Required]
-        [Length(14, 19)]
         public long CardNumber { get; set; }
 
         [Required]
@@ -24,7 +23,6 @@ namespace PaymentGateway.Api.Models.Requests
         public int Amount { get; set; }
 
         [Required]
-        [Length(3, 4)]
         public int Cvv { get; set; }
     }
 }

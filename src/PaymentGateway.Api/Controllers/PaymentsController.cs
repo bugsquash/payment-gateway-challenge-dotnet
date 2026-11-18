@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using PaymentGateway.Api.Models;
+using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
 
@@ -27,5 +29,28 @@ public class PaymentsController : Controller
         }
 
         return new OkObjectResult(payment);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PaymentRequest paymentRequest)
+    {
+        var cardNumberString = paymentRequest.CardNumber.ToString();
+
+        var cardNumberLastFourDigits = Convert.ToInt16(cardNumberString.Substring(cardNumberString.Length - 4));
+
+        var postPaymentResponse = new PostPaymentResponse()
+        {
+            Id = Guid.NewGuid(),
+            Amount = paymentRequest.Amount,
+            CardNumberLastFour = cardNumberLastFourDigits,
+            Currency = paymentRequest.Currency,
+            ExpiryMonth = paymentRequest.ExpiryMonth,
+            ExpiryYear = paymentRequest.ExpiryYear,
+            Status = PaymentStatus.Authorized,
+        };
+
+        _paymentsRepository.Add(postPaymentResponse);
+
+        return postPaymentResponse;
     }
 }
