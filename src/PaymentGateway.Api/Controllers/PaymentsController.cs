@@ -36,8 +36,33 @@ public class PaymentsController : Controller
     [HttpPost]
     public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PaymentRequest paymentRequest)
     {
-        var expiryDate = new DateOnly(paymentRequest.ExpiryYear, paymentRequest.ExpiryMonth, 1);
+        var postPaymentResponse = new PostPaymentResponse()
+        {
+            Id = Guid.NewGuid(),
+            Amount = paymentRequest.Amount,
+            CardNumberLastFour = ExtractLastFourDigitsFromCardNumber(paymentRequest.CardNumber),
+            Currency = paymentRequest.Currency,
+            ExpiryMonth = paymentRequest.ExpiryMonth,
+            ExpiryYear = paymentRequest.ExpiryYear,
+            Status = await GetPaymentStatusForPaymentRequestFromBankAsync(paymentRequest),
+        };
 
+        _paymentsRepository.Add(postPaymentResponse);
+
+        return postPaymentResponse;
+    }
+
+    private static int ExtractLastFourDigitsFromCardNumber(long cardNumber)
+    {
+        var cardNumberString = cardNumber.ToString();
+
+        var cardNumberLastFourDigits = Convert.ToInt16(cardNumberString.Substring(cardNumberString.Length - 4));
+
+        return cardNumberLastFourDigits;
+    }
+
+    private static async Task<PaymentStatus> GetPaymentStatusForPaymentRequestFromBankAsync(PaymentRequest paymentRequest)
+    {
         var postBankRequest = new PostBankRequest()
         {
             Amount = paymentRequest.Amount,
@@ -64,28 +89,6 @@ public class PaymentsController : Controller
             paymentStatus = postBankResponse.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined;
         }
 
-        var postPaymentResponse = new PostPaymentResponse()
-        {
-            Id = Guid.NewGuid(),
-            Amount = paymentRequest.Amount,
-            CardNumberLastFour = ExtractLastFourDigitsFromCardNumber(paymentRequest.CardNumber),
-            Currency = paymentRequest.Currency,
-            ExpiryMonth = paymentRequest.ExpiryMonth,
-            ExpiryYear = paymentRequest.ExpiryYear,
-            Status = paymentStatus,
-        };
-
-        _paymentsRepository.Add(postPaymentResponse);
-
-        return postPaymentResponse;
-    }
-
-    private static int ExtractLastFourDigitsFromCardNumber(long cardNumber)
-    {
-        var cardNumberString = cardNumber.ToString();
-
-        var cardNumberLastFourDigits = Convert.ToInt16(cardNumberString.Substring(cardNumberString.Length - 4));
-
-        return cardNumberLastFourDigits;
+        return paymentStatus;
     }
 }
