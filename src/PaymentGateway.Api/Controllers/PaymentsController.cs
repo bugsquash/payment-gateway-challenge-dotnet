@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+
+using Microsoft.AspNetCore.Mvc;
 
 using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
@@ -34,6 +36,34 @@ public class PaymentsController : Controller
     [HttpPost]
     public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(PaymentRequest paymentRequest)
     {
+        var expiryDate = new DateOnly(paymentRequest.ExpiryYear, paymentRequest.ExpiryMonth, 1);
+
+        var postBankRequest = new PostBankRequest()
+        {
+            Amount = paymentRequest.Amount,
+            CardNumber = paymentRequest.CardNumber.ToString(),
+            Currency = paymentRequest.Currency,
+            Cvv = paymentRequest.Cvv.ToString(),
+            ExpiryDate = (paymentRequest.ExpiryMonth.ToString() + "/" + paymentRequest.ExpiryYear.ToString())
+        };
+
+        using HttpClient httpClient = new();
+
+        using HttpResponseMessage httpResponse = await httpClient.PostAsJsonAsync("http://localhost:8080/payments", postBankRequest);
+
+        httpResponse.EnsureSuccessStatusCode();
+
+        var json = await httpResponse.Content.ReadAsStringAsync();
+
+        PostBankResponse? postBankResponse = JsonSerializer.Deserialize<PostBankResponse>(json);
+
+        PaymentStatus paymentStatus = PaymentStatus.Rejected;
+
+        if (postBankResponse != null)
+        {
+            paymentStatus = postBankResponse.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined;
+        }
+
         var postPaymentResponse = new PostPaymentResponse()
         {
             Id = Guid.NewGuid(),
@@ -42,7 +72,7 @@ public class PaymentsController : Controller
             Currency = paymentRequest.Currency,
             ExpiryMonth = paymentRequest.ExpiryMonth,
             ExpiryYear = paymentRequest.ExpiryYear,
-            Status = PaymentStatus.Authorized,
+            Status = paymentStatus,
         };
 
         _paymentsRepository.Add(postPaymentResponse);
