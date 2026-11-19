@@ -69,7 +69,7 @@ public class PaymentsController : Controller
             CardNumber = paymentRequest.CardNumber.ToString(),
             Currency = paymentRequest.Currency,
             Cvv = paymentRequest.Cvv.ToString(),
-            ExpiryDate = (paymentRequest.ExpiryMonth.ToString() + "/" + paymentRequest.ExpiryYear.ToString())
+            ExpiryDate = ("01/" + paymentRequest.ExpiryMonth.ToString() + "/" + paymentRequest.ExpiryYear.ToString())
         };
 
         using HttpClient httpClient = new();
@@ -80,7 +80,13 @@ public class PaymentsController : Controller
 
         var json = await httpResponse.Content.ReadAsStringAsync();
 
-        PostBankResponse? postBankResponse = JsonSerializer.Deserialize<PostBankResponse>(json);
+        var options = new JsonSerializerOptions
+        {
+            IncludeFields = true,
+            PropertyNameCaseInsensitive = true
+        };
+
+        PostBankResponse? postBankResponse = JsonSerializer.Deserialize<PostBankResponse>(json, options);
 
         PaymentStatus paymentStatus = PaymentStatus.Rejected;
 
